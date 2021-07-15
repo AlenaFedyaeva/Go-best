@@ -16,6 +16,9 @@ const (
 
 	// число результатов, которые хотим получить
 	resultsLimit = 10000
+
+	// На сколько увеличить глубину поиска, при приеме USR1
+	increaseDepth=2
 )
 
 var (
@@ -53,6 +56,12 @@ func main() {
 	// создаём канал для результатов
 	results := make(chan crawlResult)
 
+
+	// создаём канал для увеличения глубины
+	// depth := make(chan int)
+	//запускаем горутину для чтения сигнала USR1
+	go watchUSR1(crawler)
+
 	// запускаем горутину для чтения из каналов
 	done := watchCrawler(ctx, results, errorsLimit, resultsLimit)
 
@@ -66,14 +75,26 @@ func main() {
 	log.Println(time.Since(started))
 }
 
+//task2: увеличить глубину поиска на 2
+func watchUSR1(c *crawler) {
+	osSigUser1 := make(chan os.Signal)
+	signal.Notify(osSigUser1, syscall.SIGUSR1)
+	
+	for _ = range osSigUser1 {
+		c.IncreaseMaxDepth(increaseDepth)
+	}
+}
+
 // ловим сигналы выключения
 func watchSignals(cancel context.CancelFunc) {
-	osSignalChan := make(chan os.Signal)
+	osSignalChan := make(chan os.Signal, 2)
 
 	signal.Notify(osSignalChan,
 		syscall.SIGINT,
 		syscall.SIGTERM)
+	
 
+	
 	sig := <-osSignalChan
 	log.Printf("got signal %q", sig.String())
 

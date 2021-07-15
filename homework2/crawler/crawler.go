@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type crawlResult struct {
@@ -14,10 +15,26 @@ type crawlResult struct {
 }
 
 type crawler struct {
-	sync.Mutex
-	visited  map[string]string
-	maxDepth int
+	muxVisit   sync.Mutex
+	rwmuxDepth sync.RWMutex
+	visited    map[string]string
+	maxDepth   int
 }
+
+func (c *crawler) GetMaxDepth() int {
+	c.rwmuxDepth.RLock()
+	defer c.rwmuxDepth.RUnlock()
+
+	return c.maxDepth
+}
+//task2: увеличить глубину поиска при приеме USR1
+func (c *crawler) IncreaseMaxDepth(val int) {
+	c.rwmuxDepth.Lock()
+	defer c.rwmuxDepth.Unlock()
+
+	c.maxDepth=c.maxDepth+val
+}
+
 
 func newCrawler(maxDepth int) *crawler {
 	return &crawler{
@@ -38,7 +55,7 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 
 	default:
 		// проверка глубины
-		if depth >= c.maxDepth {
+		if depth >= c.GetMaxDepth() {
 			return
 		}
 
@@ -55,9 +72,9 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 		links := pageLinks(nil, page)
 
 		// блокировка требуется, т.к. мы модифицируем мапку в несколько горутин
-		c.Lock()
+		c.muxVisit.Lock()
 		c.visited[url] = title
-		c.Unlock()
+		c.muxVisit.Unlock()
 
 		// отправляем результат в канал, не обрабатывая на месте
 		results <- crawlResult{
@@ -78,8 +95,8 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 }
 
 func (c *crawler) checkVisited(url string) bool {
-	c.Lock()
-	defer c.Unlock()
+	c.muxVisit.Lock()
+	defer c.muxVisit.Unlock()
 
 	_, ok := c.visited[url]
 	return ok
