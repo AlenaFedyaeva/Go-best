@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -18,7 +19,10 @@ const (
 	resultsLimit = 10000
 
 	// На сколько увеличить глубину поиска, при приеме USR1
-	increaseDepth=2
+	increaseDepth = 2
+
+	//общий таймоут на работу парсера
+	parseTimeout=80000000
 )
 
 var (
@@ -33,7 +37,7 @@ var (
 func init() {
 	// задаём и парсим флаги
 	flag.StringVar(&url, "url", "https://en.wikipedia.org/wiki/Main_Page", "url address")
-	flag.IntVar(&depthLimit, "depth", 3, "max depth for run")
+	flag.IntVar(&depthLimit, "depth", 1, "max depth for run")
 	flag.Parse()
 
 	// Проверяем обязательное условие
@@ -47,8 +51,10 @@ func init() {
 func main() {
 	started := time.Now()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	//2 task: Добавить таймаут на работу парсера
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond*parseTimeout))
 	go watchSignals(cancel)
+
 	defer cancel()
 
 	crawler := newCrawler(depthLimit)
@@ -56,10 +62,7 @@ func main() {
 	// создаём канал для результатов
 	results := make(chan crawlResult)
 
-
-	// создаём канал для увеличения глубины
-	// depth := make(chan int)
-	//запускаем горутину для чтения сигнала USR1
+	//запускаем горутину для чтения сигнала USR1 и изменения глубины поиска
 	go watchUSR1(crawler)
 
 	// запускаем горутину для чтения из каналов
@@ -79,9 +82,10 @@ func main() {
 func watchUSR1(c *crawler) {
 	osSigUser1 := make(chan os.Signal)
 	signal.Notify(osSigUser1, syscall.SIGUSR1)
-	
+
 	for _ = range osSigUser1 {
-		c.IncreaseMaxDepth(increaseDepth)
+		val := c.IncreaseMaxDepth(increaseDepth)
+		fmt.Println("новое значение глубины поиска ", val)
 	}
 }
 
@@ -92,9 +96,7 @@ func watchSignals(cancel context.CancelFunc) {
 	signal.Notify(osSignalChan,
 		syscall.SIGINT,
 		syscall.SIGTERM)
-	
 
-	
 	sig := <-osSignalChan
 	log.Printf("got signal %q", sig.String())
 

@@ -28,11 +28,12 @@ func (c *crawler) GetMaxDepth() int {
 	return c.maxDepth
 }
 //task2: увеличить глубину поиска при приеме USR1
-func (c *crawler) IncreaseMaxDepth(val int) {
+func (c *crawler) IncreaseMaxDepth(val int) int {
 	c.rwmuxDepth.Lock()
 	defer c.rwmuxDepth.Unlock()
 
 	c.maxDepth=c.maxDepth+val
+	return c.maxDepth
 }
 
 
