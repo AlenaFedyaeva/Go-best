@@ -72,6 +72,8 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 		title := pageTitle(page)
 		links := pageLinks(nil, page)
 
+		fmt.Println("links",links)
+
 		// блокировка требуется, т.к. мы модифицируем мапку в несколько горутин
 		c.muxVisit.Lock()
 		c.visited[url] = title
@@ -86,6 +88,7 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 		// рекурсивно ищем ссылки
 		for link := range links {
 			// если ссылка не найдена, то запускаем анализ по новой ссылке
+			// fmt.Println("link",link)
 			if c.checkVisited(link) {
 				continue
 			}

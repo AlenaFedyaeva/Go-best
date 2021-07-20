@@ -22,7 +22,12 @@ const (
 	increaseDepth = 2
 
 	//общий таймоут на работу парсера
-	parseTimeout=80000000
+	parseTimeout = 80000000
+
+	//Глубина поиска
+	depthDefault = 1
+	//"https://vk.com"//"https://go.dev/" //
+	urlDefault= "https://en.wikipedia.org/wiki/Main_Page"
 )
 
 var (
@@ -36,8 +41,8 @@ var (
 // Как вы помните, функция инициализации стартует первой
 func init() {
 	// задаём и парсим флаги
-	flag.StringVar(&url, "url", "https://en.wikipedia.org/wiki/Main_Page", "url address")
-	flag.IntVar(&depthLimit, "depth", 1, "max depth for run")
+	flag.StringVar(&url, "url",urlDefault , "url address")
+	flag.IntVar(&depthLimit, "depth", depthDefault, "max depth for run")
 	flag.Parse()
 
 	// Проверяем обязательное условие
