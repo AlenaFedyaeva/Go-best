@@ -65,7 +65,7 @@ func pageLinks(links map[string]struct{}, n *html.Node) map[string]struct{} {
 			if a.Key != "href" {
 				continue
 			}
-			fmt.Println("a.val",a.Val)
+			//fmt.Println("a.val",a.Val)
 			// костылик для простоты
 			if _, ok := links[a.Val]; !ok && len(a.Val) > 2 && a.Val[:2] == "//" {
 				

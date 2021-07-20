@@ -25,7 +25,7 @@ const (
 	parseTimeout = 80000000
 
 	//Глубина поиска
-	depthDefault = 1
+	depthDefault = 2
 	//"https://vk.com"//"https://go.dev/" //
 	urlDefault= "https://en.wikipedia.org/wiki/Main_Page"
 )
@@ -56,6 +56,8 @@ func init() {
 func main() {
 	started := time.Now()
 
+	fmt.Println("my pid ", os.Getpid())
+	time.Sleep(50)
 	//2 task: Добавить таймаут на работу парсера
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Millisecond*parseTimeout))
 	go watchSignals(cancel)

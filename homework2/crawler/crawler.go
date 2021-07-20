@@ -52,11 +52,13 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 	// проверяем что контекст исполнения актуален
 	select {
 	case <-ctx.Done():
+		fmt.Println("ctx.done return")
 		return
 
 	default:
 		// проверка глубины
 		if depth >= c.GetMaxDepth() {
+			fmt.Println("depth return")
 			return
 		}
 
