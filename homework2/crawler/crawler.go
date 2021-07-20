@@ -52,17 +52,17 @@ func (c *crawler) run(ctx context.Context, url string, results chan<- crawlResul
 	// проверяем что контекст исполнения актуален
 	select {
 	case <-ctx.Done():
-		fmt.Println("ctx.done return")
+		//fmt.Println("ctx.done return")
 		return
 
 	default:
 		// проверка глубины
 		if depth >= c.GetMaxDepth() {
-			fmt.Println("depth return")
+			//fmt.Println("depth return")
 			return
 		}
 
-		page, err := parse(url)
+		page, err := parse(ctx,url)
 		if err != nil {
 			// ошибку отправляем в канал, а не обрабатываем на месте
 			results <- crawlResult{

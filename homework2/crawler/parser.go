@@ -1,42 +1,44 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"time"
 
 	"golang.org/x/net/html"
 )
+
 func errcheck(err error) {
-    if err != nil {
-        log.Println(err)//log.Fatal(err)
-    }
+	if err != nil {
+		log.Println(err) //log.Fatal(err)
+	}
 }
 func dclose(c io.Closer) {
-    if err := c.Close(); err != nil {
-        log.Println(err)//log.Fatal(err)
-    }
-}
-// парсим страницу
-func parse(url string) (*html.Node, error) {
-	// что здесь должно быть вместо http.Get? :)
-	cli := http.Client{
-		Timeout: 20 * time.Second,
+	if err := c.Close(); err != nil {
+		log.Println(err) //log.Fatal(err)
 	}
-	cli.Get(url)
+}
 
-	resp, err := cli.Get(url)//http.Get(url)
+// парсим страницу
+func parse(ctx context.Context, url string) (*html.Node, error) {
+	// что здесь должно быть вместо http.Get? :)
+
+	cli := http.Client{}
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+	cli.Do(req)
+
+
+	resp, err := cli.Get(url) //http.Get(url)
 	errcheck(err)
 	defer dclose(resp.Body)
-	
 
 	b, err := html.Parse(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse page")
 	}
-	
+
 	return b, err
 }
 
@@ -68,7 +70,7 @@ func pageLinks(links map[string]struct{}, n *html.Node) map[string]struct{} {
 			//fmt.Println("a.val",a.Val)
 			// костылик для простоты
 			if _, ok := links[a.Val]; !ok && len(a.Val) > 2 && a.Val[:2] == "//" {
-				
+
 				links["http://"+a.Val[2:]] = struct{}{}
 			}
 		}
